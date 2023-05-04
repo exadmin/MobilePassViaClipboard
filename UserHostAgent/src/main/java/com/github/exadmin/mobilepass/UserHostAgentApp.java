@@ -19,12 +19,15 @@ public class UserHostAgentApp {
 
         // continue application running
         Javalin app = Javalin.create()
-                .port(7000)
+                .port(Settings.getHttpPort())
                 .start();
 
-        app.get("/verify", ctx -> ctx.html("Confirmed on " + DateUtils.getCurrentTime()));
+        app.get("/verify", ctx -> ctx.html("I am trusted service you like"));
         app.get("/connect", ctx -> {
             String keyStorePass = ctx.queryParam("kspass");
+            String pinCode      = ctx.queryParam("pin");
+
+            warn("/connect is called, kspass = " + keyStorePass + ", pin = " + pinCode);
             if (StrUtils.isStringNonEmpty(keyStorePass, false)) {
                 String ntPass = Settings.getNtPassword(keyStorePass);
                 if (ntPass == null) {
@@ -32,13 +35,15 @@ public class UserHostAgentApp {
                     return;
                 }
 
-                String pinCode      = ctx.queryParam("pin");
+
                 if (pinCode == null || pinCode.length() != 6) {
                     warn("Pin code is not 6 digits, pin = " + pinCode);
                     return;
                 }
 
-                CiscoUtils.runSafe(ntPass, pinCode, true);
+                ctx.html("Connecting");
+
+                CiscoUtils.runSafe(ntPass, pinCode, false);
             }
         });
 
